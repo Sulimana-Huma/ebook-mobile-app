@@ -8,6 +8,8 @@ import 'my_books_screen.dart';
 import 'book_requests_screen.dart';
 import 'login_screen.dart';
 import 'cart_screen.dart';
+import 'offline_reading_screen.dart';
+import '../offline/offline_book_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,24 +66,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openMyBooks() {
     if (_customerId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in first')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please log in first')));
       return;
     }
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const MyBooksScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const MyBooksScreen()),
     );
   }
 
   void _openBookRequests() {
     if (_customerId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in first')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please log in first')));
       return;
     }
     Navigator.push(
@@ -94,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _logout() async {
     await ApiClient.saveToken(null);
+    await OfflineBookService.instance.clearOfflineBookList();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -150,8 +151,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.library_books, color: AppTheme.primary),
-              title: const Text('Books Gallery',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text(
+                'Books Gallery',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               selected: true,
               selectedTileColor: AppTheme.primary.withOpacity(0.1),
               onTap: () => Navigator.pop(context),
@@ -165,8 +168,10 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.shopping_cart_outlined,
-                  color: AppTheme.primary),
+              leading: const Icon(
+                Icons.shopping_cart_outlined,
+                color: AppTheme.primary,
+              ),
               title: const Text('My Cart'),
               onTap: () {
                 Navigator.pop(context);
@@ -184,6 +189,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 _openBookRequests();
               },
             ),
+
+            ListTile(
+              leading: const Icon(Icons.cloud_off),
+              title: const Text('Offline Reading'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const OfflineReadingScreen(),
+                  ),
+                );
+              },
+            ),
+
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -196,14 +216,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body:
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
               ? _buildError()
               : RefreshIndicator(
-                  onRefresh: _loadCategories,
-                  child: _buildCategoryGrid(),
-                ),
+                onRefresh: _loadCategories,
+                child: _buildCategoryGrid(),
+              ),
     );
   }
 
@@ -216,13 +237,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Failed to load categories',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Failed to load categories',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton(
-                onPressed: _loadCategories, child: const Text('Retry')),
+              onPressed: _loadCategories,
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -240,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.3,
+        childAspectRatio: 1.1, // ← was 1.3, taller boxes
       ),
       itemCount: _rootCategories.length,
       itemBuilder: (context, i) {
@@ -266,21 +291,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.folder, color: Colors.white, size: 32),
-                Text(
-                  cat.categoryName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                const Icon(Icons.folder, color: Colors.white, size: 28),
+                const SizedBox(height: 8),
+                Expanded(
+                  // ← wrap in Expanded
+                  child: Text(
+                    cat.categoryName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

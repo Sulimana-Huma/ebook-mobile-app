@@ -38,7 +38,9 @@ class ApiClient {
   // LOGIN
   // ============================================
   static Future<Map<String, dynamic>> login(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/auth/login'),
       headers: {'Content-Type': 'application/json'},
@@ -68,8 +70,10 @@ class ApiClient {
   // CATEGORIES
   // ============================================
   static Future<List<Category>> getCategories() async {
-    final res = await http.get(Uri.parse('$baseUrl/api/categories'),
-        headers: _headers());
+    final res = await http.get(
+      Uri.parse('$baseUrl/api/categories'),
+      headers: _headers(),
+    );
     if (res.statusCode != 200)
       throw Exception('Failed to load categories (${res.statusCode})');
     final List data = jsonDecode(res.body);
@@ -79,10 +83,14 @@ class ApiClient {
   // ============================================
   // BOOKS BY CATEGORY
   // ============================================
-  static Future<List<Book>> getBooksByCategory(int categoryId,
-      {int page = 1, int pageSize = 100}) async {
+  static Future<List<Book>> getBooksByCategory(
+    int categoryId, {
+    int page = 1,
+    int pageSize = 100,
+  }) async {
     final uri = Uri.parse(
-        '$baseUrl/api/books/by-category-id/$categoryId?page=$page&pageSize=$pageSize');
+      '$baseUrl/api/books/by-category-id/$categoryId?page=$page&pageSize=$pageSize',
+    );
     final res = await http.get(uri, headers: _headers());
     if (res.statusCode != 200)
       throw Exception('Failed to load books (${res.statusCode})');
@@ -93,8 +101,10 @@ class ApiClient {
   }
 
   static Future<int> getTotalBookCount() async {
-    final res = await http.get(Uri.parse('$baseUrl/api/books/total-book-count'),
-        headers: _headers());
+    final res = await http.get(
+      Uri.parse('$baseUrl/api/books/total-book-count'),
+      headers: _headers(),
+    );
     if (res.statusCode != 200) return 0;
     return jsonDecode(res.body)['totalBooks'] ?? 0;
   }
@@ -191,9 +201,9 @@ class ApiClient {
     await prefs.setString('current_user', jsonEncode(user));
   }
 
-// ============================================
-// CART
-// ============================================
+  // ============================================
+  // CART
+  // ============================================
   static Future<List<Map<String, dynamic>>> getCart() async {
     final res = await http.get(
       Uri.parse('$baseUrl/api/customers/me/cart'),
@@ -213,11 +223,12 @@ class ApiClient {
     return res.statusCode == 200;
   }
 
-// ============================================
-// PURCHASE REQUESTS
-// ============================================
+  // ============================================
+  // PURCHASE REQUESTS
+  // ============================================
   static Future<Map<String, dynamic>> createPurchaseRequest(
-      List<int> bookIds) async {
+    List<int> bookIds,
+  ) async {
     final res = await http.post(
       Uri.parse('$baseUrl/api/purchaserequests/create'),
       headers: _headers(),
@@ -226,6 +237,11 @@ class ApiClient {
     if (res.statusCode != 200)
       throw Exception('Request failed (${res.statusCode})');
     return jsonDecode(res.body) as Map<String, dynamic>;
+  }
+
+  static Future<String?> getToken() async {
+    await loadToken();
+    return _authToken;
   }
 }
 
